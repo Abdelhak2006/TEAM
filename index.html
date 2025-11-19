@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>فريق البرمجة</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: "Cairo", sans-serif;
+      background: #111;
+      color: #eee;
+    }
+
+    header {
+      padding: 30px 20px;
+      text-align: center;
+    }
+
+    header h1 {
+      font-size: 32px;
+      margin-bottom: 10px;
+    }
+
+    header p {
+      opacity: .8;
+      font-size: 15px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin: 25px 0;
+      padding: 0 10px;
+    }
+
+    input, select {
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid #444;
+      background: #222;
+      color: #eee;
+      font-size: 14px;
+      min-width: 180px;
+    }
+
+    .team-grid {
+      display: grid;
+      padding: 20px;
+      gap: 25px;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    }
+
+    .member {
+      text-align: center;
+      border-radius: 18px;
+      padding: 25px 20px;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      cursor: pointer;
+      transition: .25s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .member:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 8px 25px rgba(0,0,0,.5);
+      background: #1d1d1d;
+    }
+
+    .member img {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-bottom: 12px;
+      border: 3px solid #444;
+    }
+
+    .skills span {
+      background: #333;
+      padding: 6px 10px;
+      border-radius: 10px;
+      font-size: 12px;
+      margin: 3px;
+      display: inline-block;
+    }
+
+    /* Modal */
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      visibility: hidden;
+      opacity: 0;
+      transition: .3s;
+      z-index: 999;
+    }
+    .modal.active {
+      visibility: visible;
+      opacity: 1;
+    }
+    .modal-content {
+      background: #1b1b1b;
+      padding: 35px;
+      border-radius: 18px;
+      max-width: 450px;
+      width: 90%;
+      border: 1px solid #333;
+      text-align: center;
+      position: relative;
+      color: #eee;
+    }
+
+    .close {
+      position: absolute;
+      right: 15px;
+      top: 15px;
+      cursor: pointer;
+      font-size: 20px;
+      color: #bbb;
+    }
+
+    .extra-box {
+      margin-top: 20px;
+      padding: 12px;
+      border-radius: 12px;
+      background: #262626;
+      border: 1px solid #333;
+      font-size: 13px;
+      opacity: .9;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <h1>MR.ABDELHAK TEAM </h1>
+</header>
+
+<div class="controls">
+  <input id="search" type="text" placeholder="ابحث عن عضو أو مهارة...">
+  <select id="skillFilter">
+    <option value="all">كل المهارات</option>
+  </select>
+</div>
+
+<div class="team-grid" id="grid"></div>
+
+<!-- Modal -->
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeModal()">×</span>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<script>
+  const team = [
+    {name:"Ahmed Saad", role:"Frontend", skills:["React","CSS","JS"], bio:"خبير واجهات", photo:"https://i.pravatar.cc/200?img=1", xp:"3 سنوات خبرة في تطوير الويب."},
+    {name:"Mona Khaled", role:"Backend", skills:["Node","Postgres","API"], bio:"تصميم API قوية", photo:"https://i.pravatar.cc/200?img=2", xp:"متخصصة في قواعد البيانات وREST."},
+    {name:"Omar Nabil", role:"DevOps", skills:["AWS","Docker","CI/CD"], bio:"نشر سريع وآمن", photo:"https://i.pravatar.cc/200?img=3", xp:"إدارة سيرفرات وAutomations احترافية."},
+    {name:"Layla Hamed", role:"Designer", skills:["Figma","UX"], bio:"تصميم مميز", photo:"https://i.pravatar.cc/200?img=4", xp:"تصميم تجارب مستخدم احترافية."}
+  ];
+
+  const grid = document.getElementById("grid");
+  const search = document.getElementById("search");
+  const skillFilter = document.getElementById("skillFilter");
+
+  // Fill Skills
+  const skills = new Set();
+  team.forEach(t => t.skills.forEach(s => skills.add(s)));
+  skills.forEach(s => {
+    skillFilter.innerHTML += `<option value="${s}">${s}</option>`;
+  });
+
+  function render() {
+    const q = search.value.toLowerCase();
+    const f = skillFilter.value;
+
+    grid.innerHTML = "";
+
+    team.filter(member => {
+      const matchSearch =
+        member.name.toLowerCase().includes(q) ||
+        member.role.toLowerCase().includes(q) ||
+        member.skills.join(" ").toLowerCase().includes(q);
+
+      const matchSkill = f === "all" || member.skills.includes(f);
+
+      return matchSearch && matchSkill;
+    }).forEach(member => {
+      grid.innerHTML += `
+        <div class="member" onclick='openModal(${JSON.stringify(member)})'>
+          <img src="${member.photo}" />
+          <h3>${member.name}</h3>
+          <p style="opacity:.8">${member.role}</p>
+          <div class="skills">${member.skills.map(s => `<span>${s}</span>`).join("")}</div>
+        </div>`;
+    });
+  }
+
+  render();
+  search.oninput = render;
+  skillFilter.onchange = render;
+
+  // Modal
+  function openModal(data) {
+    document.getElementById("modalContent").innerHTML = `
+      <img src="${data.photo}" style="width:120px;height:120px;border-radius:50%;border:3px solid #444;object-fit:cover;margin-bottom:15px;" />
+      <h2>${data.name}</h2>
+      <p style="opacity:.8;margin-top:5px;">${data.role}</p>
+      <p style="margin:15px 0">${data.bio}</p>
+      <div class="skills">${data.skills.map(s=>`<span>${s}</span>`).join("")}</div>
+      <div class="extra-box">${data.xp}</div>
+    `;
+    document.getElementById("modal").classList.add("active");
+  }
+
+  function closeModal() {
+    document.getElementById("modal").classList.remove("active");
+  }
+</script>
+
+</body>
+</html>
